@@ -7,9 +7,9 @@ import math
 import signal
 import sys
 import time
+from collections.abc import AsyncIterator, Awaitable, Callable, Iterator
 from dataclasses import fields, is_dataclass
-from typing import (
-    AsyncIterator, Awaitable, Callable, Iterator, List, Optional, Union)
+from typing import Union
 
 import eventkit as ev
 
@@ -24,14 +24,14 @@ globalErrorEvent = ev.Event()
 Event to emit global exceptions.
 """
 
-EPOCH = dt.datetime(1970, 1, 1, tzinfo=dt.timezone.utc)
+EPOCH = dt.datetime(1970, 1, 1, tzinfo=dt.UTC)
 UNSET_INTEGER = 2 ** 31 - 1
 UNSET_DOUBLE = sys.float_info.max
 
 Time_t = Union[dt.time, dt.datetime]
 
 
-def df(objs, labels: Optional[List[str]] = None):
+def df(objs, labels: list[str] | None = None):
     """
     Create pandas DataFrame from the sequence of same-type objects.
 
@@ -39,6 +39,7 @@ def df(objs, labels: Optional[List[str]] = None):
       labels: If supplied, retain only the given labels and drop the rest.
     """
     import pandas as pd
+
     from .objects import DynamicObject
     if objs:
         objs = list(objs)
@@ -92,7 +93,7 @@ def dataclassNonDefaults(obj) -> dict:
         raise TypeError(f'Object {obj} is not a dataclass')
     values = [getattr(obj, field.name) for field in fields(obj)]
     return {
-        field.name: value for field, value in zip(fields(obj), values)
+        field.name: value for field, value in zip(fields(obj), values, strict=False)
         if value != field.default
         and value == value
         and not (isinstance(value, list) and value == [])}
@@ -160,8 +161,8 @@ def barplot(bars, title='', upColor='blue', downColor='red'):
     Create candlestick plot for the given bars. The bars can be given as
     a DataFrame or as a list of bar objects.
     """
-    import pandas as pd
     import matplotlib.pyplot as plt
+    import pandas as pd
     from matplotlib.lines import Line2D
     from matplotlib.patches import Rectangle
 
@@ -270,7 +271,7 @@ def formatSI(n: float) -> str:
         log = int(math.floor(math.log10(n)))
         i, j = divmod(log, 3)
         for _try in range(2):
-            templ = '%.{}f'.format(2 - j)
+            templ = f'%.{2 - j}f'
             val = templ % (n * 10 ** (-3 * i))
             if val != '1000':
                 break
@@ -295,7 +296,7 @@ class timeit:
         print(self.title + ' took ' + formatSI(time.time() - self.t0) + 's')
 
 
-def run(*awaitables: Awaitable, timeout: Optional[float] = None):
+def run(*awaitables: Awaitable, timeout: float | None = None):
     """
     By default run the event loop forever.
 
@@ -403,7 +404,7 @@ def timeRange(start: Time_t, end: Time_t, step: float) \
     assert step > 0
     delta = dt.timedelta(seconds=step)
     t = _fillDate(start)
-    tz = dt.timezone.utc if t.tzinfo else None
+    tz = dt.UTC if t.tzinfo else None
     now = dt.datetime.now(tz)
     while t < now:
         t += delta
@@ -435,7 +436,7 @@ async def timeRangeAsync(
     assert step > 0
     delta = dt.timedelta(seconds=step)
     t = _fillDate(start)
-    tz = dt.timezone.utc if t.tzinfo else None
+    tz = dt.UTC if t.tzinfo else None
     now = dt.datetime.now(tz)
     while t < now:
         t += delta
@@ -509,24 +510,24 @@ def useQt(qtLib: str = 'PyQt5', period: float = 0.01):
     qt_step()
 
 
-def formatIBDatetime(t: Union[dt.date, dt.datetime, str, None]) -> str:
+def formatIBDatetime(t: dt.date | dt.datetime | str | None) -> str:
     """Format date or datetime to string that IB uses."""
     if not t:
         s = ''
     elif isinstance(t, dt.datetime):
         # convert to UTC timezone
-        t = t.astimezone(tz=dt.timezone.utc)
+        t = t.astimezone(tz=dt.UTC)
         s = t.strftime('%Y%m%d %H:%M:%S UTC')
     elif isinstance(t, dt.date):
         t = dt.datetime(
-            t.year, t.month, t.day, 23, 59, 59).astimezone(tz=dt.timezone.utc)
+            t.year, t.month, t.day, 23, 59, 59).astimezone(tz=dt.UTC)
         s = t.strftime('%Y%m%d %H:%M:%S UTC')
     else:
         s = t
     return s
 
 
-def parseIBDatetime(s: str) -> Union[dt.date, dt.datetime]:
+def parseIBDatetime(s: str) -> dt.date | dt.datetime:
     """Parse string in IB date or datetime format to datetime."""
     if len(s) == 8:
         # YYYYmmdd
@@ -535,7 +536,7 @@ def parseIBDatetime(s: str) -> Union[dt.date, dt.datetime]:
         d = int(s[6:8])
         t = dt.date(y, m, d)
     elif s.isdigit():
-        t = dt.datetime.fromtimestamp(int(s), dt.timezone.utc)
+        t = dt.datetime.fromtimestamp(int(s), dt.UTC)
     elif s.count(' ') >= 2 and '  ' not in s:
         # 20221125 10:00:00 Europe/Amsterdam
         s0, s1, s2 = s.split(' ', 2)

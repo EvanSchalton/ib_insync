@@ -11,6 +11,7 @@ from eventkit import Event
 
 import ib_insync.util as util
 from ib_insync.contract import Contract, Forex
+from ib_insync.event_topic import EventTopic
 from ib_insync.ib import IB
 
 
@@ -260,16 +261,16 @@ class Watchdog:
     readonly: bool = False
     account: str = ''
     raiseSyncErrors: bool = False
-    probeContract: Contract = Forex('EURUSD')
+    probeContract: Contract = Forex(pair='EURUSD')
     probeTimeout: float = 4
 
     def __post_init__(self):
-        self.startingEvent = Event('startingEvent')
-        self.startedEvent = Event('startedEvent')
-        self.stoppingEvent = Event('stoppingEvent')
-        self.stoppedEvent = Event('stoppedEvent')
-        self.softTimeoutEvent = Event('softTimeoutEvent')
-        self.hardTimeoutEvent = Event('hardTimeoutEvent')
+        self.startingEvent = Event(EventTopic.STARTING)
+        self.startedEvent = Event(EventTopic.STARTED)
+        self.stoppingEvent = Event(EventTopic.STOPPING)
+        self.stoppedEvent = Event(EventTopic.STOPPED)
+        self.softTimeoutEvent = Event(EventTopic.SOFT_TIMEOUT)
+        self.hardTimeoutEvent = Event(EventTopic.HARD_TIMEOUT)
         if not self.controller:
             raise ValueError('No controller supplied')
         if not self.ib:

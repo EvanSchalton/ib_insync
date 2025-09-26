@@ -2,15 +2,23 @@
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import ClassVar, List, Optional, Union
+from typing import ClassVar
 
 from eventkit import Event, Op
 
 from ib_insync.contract import Contract
+from ib_insync.event_topic import EventTopic
 from ib_insync.objects import (
-    DOMLevel, Dividends, FundamentalRatios, MktDepthData,
-    OptionComputation, TickByTickAllLast, TickByTickBidAsk, TickByTickMidPoint,
-    TickData)
+    Dividends,
+    DOMLevel,
+    FundamentalRatios,
+    MktDepthData,
+    OptionComputation,
+    TickByTickAllLast,
+    TickByTickBidAsk,
+    TickByTickMidPoint,
+    TickData,
+)
 from ib_insync.util import dataclassRepr, isNan
 
 nan = float('nan')
@@ -41,8 +49,8 @@ class Ticker:
 
     events: ClassVar = ('updateEvent',)
 
-    contract: Optional[Contract] = None
-    time: Optional[datetime] = None
+    contract: Contract | None = None
+    time: datetime | None = None
     marketDataType: int = 1
     minTick: float = nan
     bid: float = nan
@@ -80,7 +88,7 @@ class Ticker:
     rtHistVolatility: float = nan
     rtVolume: float = nan
     rtTradeVolume: float = nan
-    rtTime: Optional[datetime] = None
+    rtTime: datetime | None = None
     avVolume: float = nan
     tradeCount: float = nan
     tradeRate: float = nan
@@ -95,19 +103,18 @@ class Ticker:
     avOptionVolume: float = nan
     histVolatility: float = nan
     impliedVolatility: float = nan
-    dividends: Optional[Dividends] = None
-    fundamentalRatios: Optional[FundamentalRatios] = None
-    ticks: List[TickData] = field(default_factory=list)
-    tickByTicks: List[Union[
-        TickByTickAllLast, TickByTickBidAsk, TickByTickMidPoint]] = \
+    dividends: Dividends | None = None
+    fundamentalRatios: FundamentalRatios | None = None
+    ticks: list[TickData] = field(default_factory=list)
+    tickByTicks: list[TickByTickAllLast | TickByTickBidAsk | TickByTickMidPoint] = \
         field(default_factory=list)
-    domBids: List[DOMLevel] = field(default_factory=list)
-    domAsks: List[DOMLevel] = field(default_factory=list)
-    domTicks: List[MktDepthData] = field(default_factory=list)
-    bidGreeks: Optional[OptionComputation] = None
-    askGreeks: Optional[OptionComputation] = None
-    lastGreeks: Optional[OptionComputation] = None
-    modelGreeks: Optional[OptionComputation] = None
+    domBids: list[DOMLevel] = field(default_factory=list)
+    domAsks: list[DOMLevel] = field(default_factory=list)
+    domTicks: list[MktDepthData] = field(default_factory=list)
+    bidGreeks: OptionComputation | None = None
+    askGreeks: OptionComputation | None = None
+    lastGreeks: OptionComputation | None = None
+    modelGreeks: OptionComputation | None = None
     auctionVolume: float = nan
     auctionPrice: float = nan
     auctionImbalance: float = nan
@@ -116,7 +123,7 @@ class Ticker:
     snapshotPermissions: int = 0
 
     def __post_init__(self):
-        self.updateEvent = TickerUpdateEvent('updateEvent')
+        self.updateEvent = TickerUpdateEvent(EventTopic.UPDATE)
 
     def __eq__(self, other):
         return self is other
@@ -246,7 +253,7 @@ class Midpoints(Tickfilter):
 
 @dataclass
 class Bar:
-    time: Optional[datetime]
+    time: datetime | None
     open: float = nan
     high: float = nan
     low: float = nan
@@ -255,11 +262,11 @@ class Bar:
     count: int = 0
 
 
-class BarList(List[Bar]):
+class BarList(list[Bar]):
 
     def __init__(self, *args):
         super().__init__(*args)
-        self.updateEvent = Event('updateEvent')
+        self.updateEvent = Event(EventTopic.UPDATE)
 
     def __eq__(self, other):
         return self is other

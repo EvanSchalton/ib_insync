@@ -4,6 +4,7 @@ import asyncio
 
 from eventkit import Event
 
+from ib_insync.event_topic import EventTopic
 from ib_insync.util import getLoop
 
 
@@ -20,8 +21,8 @@ class Connection(asyncio.Protocol):
     """
 
     def __init__(self):
-        self.hasData = Event('hasData')
-        self.disconnected = Event('disconnected')
+        self.hasData = Event(EventTopic.HAS_DATA)
+        self.disconnected = Event(EventTopic.DISCONNECTED)
         self.reset()
 
     def reset(self):

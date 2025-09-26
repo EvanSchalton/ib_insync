@@ -1,0 +1,3 @@
+- don't create new *_replaced / *_v2 / *_refactored / *_improved /etc. files -- just update in place and/or replace the existing code when refactoring
+- You shouldn't modify pyproject toml's deps manually -- you can use poetry add/remove/update instead
+- We basically never want to resolve circular dependencies by embedding in functions/classes - instead we should move reused code to a higher level or use type hinting conditionals (As applicable).

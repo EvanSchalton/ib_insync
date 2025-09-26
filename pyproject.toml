@@ -1,0 +1,73 @@
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[project]
+name = "ib_insync"
+version = "0.9.86"
+description = "Python sync/async framework for Interactive Brokers API"
+authors = [
+    {name = "Ewald R. de Wit", email = "ewald.de.wit@gmail.com"},
+    {name = "Evan Schalton", email = "Evan.Schalton@Gmail.com"}
+]
+readme = "README.rst"
+license = "BSD-3-Clause"
+requires-python = ">=3.11"
+keywords = ["ibapi", "tws", "asyncio", "jupyter", "interactive", "brokers", "async"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Topic :: Office/Business :: Financial :: Investment",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3 :: Only",
+]
+dependencies = [
+    "eventkit>=1.0.3",
+    "nest-asyncio>=1.6.0",
+    "pydantic>=2.11.9"
+]
+
+[project.urls]
+Homepage = "https://github.com/erdewit/ib_insync"
+
+[tool.poetry]
+packages = [{include = "ib_insync"}]
+include = ["ib_insync/py.typed"]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+eventkit = "^1.0.3"
+nest-asyncio = "^1.6.0"
+pydantic = "^2.11.9"
+
+[tool.poetry.group.dev.dependencies]
+invoke = "^2.2.0"
+pytest = "^8.4.2"
+pytest-asyncio = "^1.2.0"
+setuptools = "^80.9.0"
+ruff = "^0.8.0"
+mypy = "^1.18.2"
+types-dataclasses = "^0.6.6"
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+src = ["ib_insync"]
+
+[tool.ruff.lint]
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "B",  # flake8-bugbear
+    "UP", # pyupgrade
+]
+ignore = [
+    "E501",  # line too long (handled by formatter)
+]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"

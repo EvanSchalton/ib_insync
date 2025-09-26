@@ -7,13 +7,13 @@ import math
 import struct
 import time
 from collections import deque
-from typing import Deque, List, Optional
 
 from eventkit import Event
 
 from .connection import Connection
 from .contract import Contract
-from .decoder import Decoder
+from .decoders import MessageDispatcher
+from .event_topic import EventTopic
 from .objects import ConnectionStats, WshEventData
 from .util import UNSET_DOUBLE, UNSET_INTEGER, dataclassAsTuple, getLoop, run
 
@@ -91,12 +91,12 @@ class Client:
 
     def __init__(self, wrapper):
         self.wrapper = wrapper
-        self.decoder = Decoder(wrapper, 0)
-        self.apiStart = Event('apiStart')
-        self.apiEnd = Event('apiEnd')
-        self.apiError = Event('apiError')
-        self.throttleStart = Event('throttleStart')
-        self.throttleEnd = Event('throttleEnd')
+        self.dispatcher = MessageDispatcher(wrapper)
+        self.apiStart = Event(EventTopic.API_START)
+        self.apiEnd = Event(EventTopic.API_END)
+        self.apiError = Event(EventTopic.API_ERROR)
+        self.throttleStart = Event(EventTopic.THROTTLE_START)
+        self.throttleEnd = Event(EventTopic.THROTTLE_END)
         self._logger = logging.getLogger('ib_insync.client')
 
         self.conn = Connection()
@@ -127,8 +127,8 @@ class Client:
         self._numBytesRecv = 0
         self._numMsgRecv = 0
         self._isThrottling = False
-        self._msgQ: Deque[str] = deque()
-        self._timeQ: Deque[float] = deque()
+        self._msgQ: deque[str] = deque()
+        self._timeQ: deque[float] = deque()
 
     def serverVersion(self) -> int:
         return self._serverVersion
@@ -166,7 +166,7 @@ class Client:
         """Update the next reqId to be at least ``minReqId``."""
         self._reqIdSeq = max(self._reqIdSeq, minReqId)
 
-    def getAccounts(self) -> List[str]:
+    def getAccounts(self) -> list[str]:
         """Get the list of account names that are under management."""
         if not self.isReady():
             raise ConnectionError('Not connected')
@@ -184,7 +184,7 @@ class Client:
 
     def connect(
             self, host: str, port: int, clientId: int,
-            timeout: Optional[float] = 2.0):
+            timeout: float | None = 2.0):
         """
         Connect to a running TWS or IB gateway application.
 
@@ -334,7 +334,7 @@ class Client:
                     self._onSocketDisconnected(
                         'TWS/gateway version must be >= 972')
                     return
-                self.decoder.serverVersion = self._serverVersion
+                self.dispatcher.server_version = self._serverVersion
                 self.connState = Client.CONNECTED
                 self.startApi()
                 self.wrapper.connectAck()
@@ -356,8 +356,8 @@ class Client:
                         self._apiReady = True
                         self.apiStart.emit()
 
-                # decode and handle the message
-                self.decoder.interpret(fields)
+                # decode and handle the message using new dispatcher
+                self.dispatcher.dispatch(fields)
 
         if self._tcpDataProcessed:
             self._tcpDataProcessed()

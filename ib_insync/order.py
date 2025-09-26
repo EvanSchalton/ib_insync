@@ -1,11 +1,13 @@
 """Order types used by Interactive Brokers."""
 
 from dataclasses import dataclass, field
-from typing import ClassVar, FrozenSet, List, NamedTuple
+from typing import ClassVar, NamedTuple
 
 from eventkit import Event
 
-from .contract import Contract, TagValue
+from .contract import Contract
+from .contract.details import TagValue
+from .event_topic import EventTopic
 from .objects import Fill, SoftDollarTier, TradeLogEntry
 from .util import UNSET_DOUBLE, UNSET_INTEGER, dataclassNonDefaults
 
@@ -105,15 +107,15 @@ class Order:
     clearingAccount: str = ''
     clearingIntent: str = ''
     algoStrategy: str = ''
-    algoParams: List[TagValue] = field(default_factory=list)
-    smartComboRoutingParams: List[TagValue] = field(default_factory=list)
+    algoParams: list[TagValue] = field(default_factory=list)
+    smartComboRoutingParams: list[TagValue] = field(default_factory=list)
     algoId: str = ''
     whatIf: bool = False
     notHeld: bool = False
     solicited: bool = False
     modelCode: str = ''
-    orderComboLegs: List['OrderComboLeg'] = field(default_factory=list)
-    orderMiscOptions: List[TagValue] = field(default_factory=list)
+    orderComboLegs: list['OrderComboLeg'] = field(default_factory=list)
+    orderMiscOptions: list[TagValue] = field(default_factory=list)
     referenceContractId: int = 0
     peggedChangeAmount: float = 0.0
     isPeggedChangeAmountDecrease: bool = False
@@ -126,7 +128,7 @@ class Order:
     adjustedTrailingAmount: float = UNSET_DOUBLE
     adjustableTrailingUnit: int = 0
     lmtPriceOffset: float = UNSET_DOUBLE
-    conditions: List['OrderCondition'] = field(default_factory=list)
+    conditions: list['OrderCondition'] = field(default_factory=list)
     conditionsCancelOrder: bool = False
     conditionsIgnoreRth: bool = False
     extOperator: str = ''
@@ -238,9 +240,9 @@ class OrderStatus:
     Filled: ClassVar[str] = 'Filled'
     Inactive: ClassVar[str] = 'Inactive'
 
-    DoneStates: ClassVar[FrozenSet[str]] = frozenset(
+    DoneStates: ClassVar[frozenset[str]] = frozenset(
         ['Filled', 'Cancelled', 'ApiCancelled'])
-    ActiveStates: ClassVar[FrozenSet[str]] = frozenset(
+    ActiveStates: ClassVar[frozenset[str]] = frozenset(
         ['PendingSubmit', 'ApiPending', 'PreSubmitted', 'Submitted'])
 
 
@@ -289,8 +291,8 @@ class Trade:
     contract: Contract = field(default_factory=Contract)
     order: Order = field(default_factory=Order)
     orderStatus: 'OrderStatus' = field(default_factory=OrderStatus)
-    fills: List[Fill] = field(default_factory=list)
-    log: List[TradeLogEntry] = field(default_factory=list)
+    fills: list[Fill] = field(default_factory=list)
+    log: list[TradeLogEntry] = field(default_factory=list)
     advancedError: str = ''
 
     events: ClassVar = (
@@ -299,13 +301,13 @@ class Trade:
         'cancelEvent', 'cancelledEvent')
 
     def __post_init__(self):
-        self.statusEvent = Event('statusEvent')
-        self.modifyEvent = Event('modifyEvent')
-        self.fillEvent = Event('fillEvent')
-        self.commissionReportEvent = Event('commissionReportEvent')
-        self.filledEvent = Event('filledEvent')
-        self.cancelEvent = Event('cancelEvent')
-        self.cancelledEvent = Event('cancelledEvent')
+        self.statusEvent = Event(EventTopic.STATUS)
+        self.modifyEvent = Event(EventTopic.MODIFY)
+        self.fillEvent = Event(EventTopic.FILL)
+        self.commissionReportEvent = Event(EventTopic.COMMISSION_REPORT)
+        self.filledEvent = Event(EventTopic.FILLED)
+        self.cancelEvent = Event(EventTopic.CANCEL)
+        self.cancelledEvent = Event(EventTopic.CANCELLED)
 
     def isActive(self) -> bool:
         """True if eligible for execution, false otherwise."""
